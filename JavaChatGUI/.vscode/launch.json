@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+  {
+  "type": "java",
+  "name": "Launch ClientGUI",
+  "request": "launch",
+  "mainClass": "ClientGUI",
+  "vmArgs": "--module-path \"C:/javafx-sdk-21/javafx-sdk-24.0.1/lib\" --add-modules javafx.controls,javafx.fxml --enable-native-access=ALL-UNNAMED"
+}
+,
+    {
+      "type": "java",
+      "name": "Launch Server",
+      "request": "launch",
+      "mainClass": "ServerGUI",
+      "vmArgs": "--module-path lib --add-modules javafx.controls,javafx.fxml"
+    }
+  ]
+}
