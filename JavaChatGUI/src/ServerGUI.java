@@ -7,84 +7,130 @@ import javafx.stage.Stage;
 
 import java.io.*;
 import java.net.*;
+import java.util.*;
+import java.util.concurrent.*;
 
 public class ServerGUI extends Application {
 
     private TextArea messageArea;
     private TextField inputField;
+    private ComboBox<String> clientSelector;
     private Button sendButton;
 
     private ServerSocket serverSocket;
-    private Socket clientSocket;
-    private BufferedReader in;
-    private PrintWriter out;
+    private ExecutorService pool = Executors.newCachedThreadPool();
+    private Map<String, ClientHandler> clients = new ConcurrentHashMap<>();
 
     @Override
     public void start(Stage primaryStage) {
         messageArea = new TextArea();
         messageArea.setEditable(false);
-        messageArea.setWrapText(true);
 
         inputField = new TextField();
         inputField.setPromptText("Type your message...");
-        sendButton = new Button("Send");
 
+        clientSelector = new ComboBox<>();
+        clientSelector.getItems().add("All");
+        clientSelector.setValue("All");
+
+        sendButton = new Button("Send");
         sendButton.setOnAction(e -> sendMessage());
 
-        HBox inputBox = new HBox(10, inputField, sendButton);
+        HBox inputBox = new HBox(10, new Label("To:"), clientSelector, inputField, sendButton);
+        HBox.setHgrow(inputField, Priority.ALWAYS);
+
         VBox root = new VBox(10, messageArea, inputBox);
-        root.setPrefSize(500, 400);
+        root.setPrefSize(600, 400);
 
         primaryStage.setTitle("Server Chat");
         primaryStage.setScene(new Scene(root));
         primaryStage.show();
 
-        // Run server in background thread to avoid freezing UI
         new Thread(this::startServer).start();
     }
 
     private void startServer() {
         try {
             serverSocket = new ServerSocket(1234);
+            Platform.runLater(() -> appendMessage("Server started. Waiting for clients..."));
 
-            // Update UI on JavaFX thread
-            Platform.runLater(() -> appendMessage("Server started. Waiting for client..."));
-
-            clientSocket = serverSocket.accept();
-
-            Platform.runLater(() -> appendMessage("Client connected: " + clientSocket.getInetAddress()));
-
-            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            out = new PrintWriter(clientSocket.getOutputStream(), true);
-
-            String msg;
-            while ((msg = in.readLine()) != null) {
-                String finalMsg = msg;
-                Platform.runLater(() -> appendMessage("Client: " + finalMsg));
+            while (true) {
+                Socket socket = serverSocket.accept();
+                ClientHandler handler = new ClientHandler(socket);
+                pool.execute(handler);
             }
-
         } catch (IOException e) {
-            Platform.runLater(() -> appendMessage("Error: " + e.getMessage()));
+            Platform.runLater(() -> appendMessage("Server error: " + e.getMessage()));
         }
     }
 
     private void sendMessage() {
+        String target = clientSelector.getValue();
         String msg = inputField.getText();
-        if (msg.isEmpty() || out == null) return;
+        if (msg.isEmpty()) return;
 
-        appendMessage("Server: " + msg);
-        out.println(msg); // send to client
+        appendMessage("Server to " + target + ": " + msg);
+        if (target.equals("All")) {
+            clients.values().forEach(client -> client.send("Server (broadcast): " + msg));
+        } else {
+            ClientHandler client = clients.get(target);
+            if (client != null) client.send("Server: " + msg);
+        }
         inputField.clear();
     }
 
     private void appendMessage(String msg) {
-        messageArea.appendText(msg + "\n");
+        Platform.runLater(() -> messageArea.appendText(msg + "\n"));
     }
 
     @Override
     public void stop() throws Exception {
-        if (clientSocket != null) clientSocket.close();
         if (serverSocket != null) serverSocket.close();
+        pool.shutdown();
+    }
+
+    private class ClientHandler implements Runnable {
+        private Socket socket;
+        private BufferedReader in;
+        private PrintWriter out;
+        private String clientName;
+
+        public ClientHandler(Socket socket) {
+            this.socket = socket;
+        }
+
+        @Override
+        public void run() {
+            try {
+                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                out = new PrintWriter(socket.getOutputStream(), true);
+
+                clientName = in.readLine(); // First message is the name
+                clients.put(clientName, this);
+                Platform.runLater(() -> {
+                    clientSelector.getItems().add(clientName);
+                    appendMessage(clientName + " connected.");
+                });
+
+                String msg;
+                while ((msg = in.readLine()) != null) {
+                    String received = clientName + ": " + msg;
+                    Platform.runLater(() -> appendMessage(received));
+                }
+            } catch (IOException e) {
+                Platform.runLater(() -> appendMessage("Connection with " + clientName + " lost."));
+            } finally {
+                try {
+                    clients.remove(clientName);
+                    Platform.runLater(() -> clientSelector.getItems().remove(clientName));
+                    if (socket != null) socket.close();
+                } catch (IOException ignored) {}
+            }
+        }
+
+        public void send(String msg) {
+            out.println(msg);
+        }
     }
 
     public static void main(String[] args) {
