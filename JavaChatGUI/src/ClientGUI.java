@@ -95,10 +95,12 @@ public class ClientGUI extends Application {
         }
     }
 
-    private void sendMessage() {
+       private void sendMessage() {
         String message = inputField.getText();
         if (!message.isEmpty() && writer != null) {
             writer.println(message);
+            // Add this line to show the sent message in client's message area
+            messageArea.appendText("You: " + message + "\n");
             inputField.clear();
         }
     }

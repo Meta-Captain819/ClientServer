@@ -117,6 +117,7 @@ public class ServerGUI extends Application {
                     String received = clientName + ": " + msg;
                     Platform.runLater(() -> appendMessage(received));
                 }
+                throw new IOException("Client "+ clientName + " disconnected.");
             } catch (IOException e) {
                 Platform.runLater(() -> appendMessage("Connection with " + clientName + " lost."));
             } finally {
