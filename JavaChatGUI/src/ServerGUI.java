@@ -105,7 +105,7 @@ public class ServerGUI extends Application {
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 out = new PrintWriter(socket.getOutputStream(), true);
 
-                clientName = in.readLine(); // First message is the name
+                clientName = in.readLine(); // First message is the name taken input from client
                 clients.put(clientName, this);
                 Platform.runLater(() -> {
                     clientSelector.getItems().add(clientName);
