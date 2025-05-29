@@ -10,9 +10,9 @@ Key aspects of the project include:
 - The system manages client connections, message routing, and ensures data integrity over the network.
 - The application showcases multithreading for handling concurrent client connections and asynchronous communication.
 
-```
+
 This project serves as a practical implementation for learning Java networking, concurrency, and GUI development.
-```
+
 
 ## 📚 Table of Contents
 
