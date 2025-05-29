@@ -16,14 +16,13 @@ This project serves as a practical implementation for learning Java networking, 
 
 ## 📚 Table of Contents
 
-- [📖 Project Description](#-project-description)
-- [📂 Folder Structure](#-folder-structure)
-- [✨ Features](#-features)
-- [🧰 Tech Stack](#-tech-stack)
-- [💻 Installation & Running Instructions](#-installation--running-instructions)
-  
-- [🚀 Usage Guide](#-usage-guide)
-- [🛡️ License](#-license)
+- [📖 Project Description](#project-description)
+- [📂 Folder Structure](#folder-structure)
+- [✨ Features](#features)
+- [🧰 Tech Stack](#tech-stack)
+- [💻 Installation & Running Instructions](#installation--running-instructions)
+- [🚀 Usage Guide](#usage-guide)
+- [🛡️ License](#license)
 - [👨‍💻 Author Rights](#-author-rights)
 
 ## Folder Structure
